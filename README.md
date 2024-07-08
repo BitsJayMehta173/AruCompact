@@ -2,14 +2,33 @@ Efficient Video Meeting Application (Pre Frame Processing)
 
 -------------------------------------
 
-Main File :- second.py (Time Consuming needs optimization) (Rewriting Using v2.0) (Still in progress) 
+Main File :- server.py , main.py (Sender Side Image Decoding Left)
 
 (As We need to create microservices for proper structure of camera with other services and threading, Main File will be updated later)
 But I have implemented Camera function in same process for now for continuous flow and error handling
 Now we are ready to send Data over internet but without any audio data.
 
+first run server.py
 
-BaseModel Sender Side :- (v3latest.py)[v3.0] .(latest.py)[v2.0] , (basicflow.py)[v1.0]
+second run main.py
+
+server.py sets up a local host server at port 5000 and listen to the data sent from main.py at real time
+
+main.py scans the uncommon pixels in the image ands sends it to server.py using socket in chunks
+
+Sender Side :- (main.py)[v3.1],(server.py)[v3.1] ,(latest.py)[v2.0] , (basicflow.py)[v1.0]
+--------------------------------
+# LATEST UPDATES (V3.1)
+
+I have used socket to transfer data in chunks to a local host server in my own machine for now.
+We still have 1-2 sec latency due to chunks but as we will use WebSockets later on which Supports Upto 64KB chunk we can decrease the latency and quality is being processed as the original image was but we can later on try on decreasing quality for low network connectivity.
+
+We need to Decode back the Recieved Data and reform the Image Frame by frame we will be using Tkinter to create a window which has Image component and updates image as we decode each frame one by one.
+
+We have not added audio for now but we can create a separate microservice for it. As for now we are only focusing on Image transfer quality.
+
+--------------------------------
+
 
 --------------------------------
 # LATEST UPDATES (V3.0)
