@@ -15,27 +15,46 @@ import os
 import cv2
 import asyncio
 import socket
+import pickle
+
 
 cap = cv2.VideoCapture(0)  # Use 0 for the default camera
 
 arr=[]
 def load_image(file_path):
     img = Image.open(file_path).convert('RGB')
-    return np.array(img)
+    return np.array(img, dtype=np.uint8)
+
+
+async def send_array(array, writer):
+    if not isinstance(array, np.ndarray):
+        raise TypeError(f"Expected a NumPy array, but got {type(array)}.")
+    # Serialize the NumPy array
+    data = pickle.dumps(array)
+    # Send the size of the serialized data first
+    writer.write(len(data).to_bytes(4, byteorder='big'))
+    await writer.drain()
+    # Send the serialized data
+    writer.write(data)
+    await writer.drain()
 
 async def send_data(data,cs):
     try:
         print(cs)
         UDP_IP = 'localhost'
         UDP_PORT = 12345
-        CHUNK_SIZE = 8000  # Adjust the chunk size as needed to fit within typical MTU which supports 1500bytes but later we will use WebSockets so we can use upto 64KB
+        CHUNK_SIZE = 480
+        
+            
+        # Adjust the chunk size as needed to fit within typical MTU which supports 1500bytes but later we will use WebSockets so we can use upto 64KB
         # For right now i am setting 8000 as per index of array has 3bytes so we to qualize sender and reciever side chunksize i have made receiver_chunk=sender_chunk*3 we can increase but this is fine as we are getting <=27 frames which our camera normally captures it can be minimized for better performance as we are sending in our machine local host cant say about over the internet but as WebSockets has 64KB limit we can send more bytes as right now we are only using 8bytes=8000 and reciever side 24bytes=24000 so we can extend further but lets see what we can achieve we cant say for sure
+        print(len(data[cs]))
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             for i in range(0, len(data[cs]), CHUNK_SIZE):
                 chunk = data[cs][i:i+CHUNK_SIZE]
                 sock.sendto(chunk.tobytes(), (UDP_IP, UDP_PORT))
-            empty_data=np.array([[-1,-1]])
-            print(empty_data)
+            empty_data=np.array([[0]],dtype=np.uint8)
+            # print(empty_data)
             sock.sendto(empty_data.tobytes(), (UDP_IP, UDP_PORT))
         # print("Data sent successfully")
     except Exception as e:
@@ -46,6 +65,7 @@ maxcnt=1
 # Since First Frame will be while connecting it can be sent without any optimization
 async def main():
     global maxcnt
+    reader, writer = await asyncio.open_connection('localhost', 5000)
     if not cap.isOpened():
         print("Error: Could not open camera.")
     else:
@@ -67,12 +87,35 @@ async def main():
         else:
             print("Error: Failed to capture frame.")
 
+        index=0
         image1 = load_image(str(cnt)+".jpg")
+        image1cpy = load_image(str(cnt)+".jpg")
+        # array = array.astype(np.uint8)
+
+        # Convert the numpy array to an image using PIL
+        image = Image.fromarray(image1)
+
+        # Save the image
+        image.save('1.png')
+        common_pixels_mask = np.all(image1 == image1cpy, axis=-1)
+        common_pixels = image1[common_pixels_mask]
+        coordinates = np.argwhere(common_pixels_mask).astype(np.uint8)
+        # print(common_pixels)
+        common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
+        # print(common_pixels_with_coordinates)
+        arr.append(common_pixels_with_coordinates)
+        # await send_data(arr,index)
+        await send_array(common_pixels_with_coordinates,writer)
+        # print(common_pixels_with_coordinates)
+        # print(image1)
+
+
+        index+=1
         cnt+=1
 
         # Our Optimization starts from here so I am mainly focusing on time taken for below part only
         start_t = time.time()
-        index=0
+        # time.sleep(2)
         while True:
             maxcnt+=1
             ret, frame = cap.read()
@@ -98,16 +141,28 @@ async def main():
             cnt=2
 
             height, width, _ = image1.shape
-
+            # print(height,width)
+            scale_factor_y = 480 / 256
+            scale_factor_x = 640 / 256
 
             # Using numpyarray comparison we find common pixels
             common_pixels_mask = np.all(image1 != image2, axis=-1)
-
             common_pixels = image1[common_pixels_mask]
             if(len(common_pixels)==0):
                 continue
-            arr.append(common_pixels)
-            await send_data(arr,index)
+            coordinates = np.argwhere(common_pixels_mask)
+            # original_coordinates = coordinates.astype(float)
+            # original_coordinates[:, 0] = original_coordinates[:, 0] * scale_factor_y
+            # original_coordinates[:, 1] = original_coordinates[:, 1] * scale_factor_x
+            # original_coordinates = original_coordinates.astype(int)
+
+            common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
+            arr.append(common_pixels_with_coordinates)
+            # await send_data(arr,index)
+            await send_array(common_pixels_with_coordinates,writer)
+            # print(common_pixels_with_coordinates.shape)
+
+
             index+=1
             # print(type(common_pixels))
 
@@ -127,7 +182,7 @@ async def main():
 
             try:
                 os.remove(file_to_delete)
-                print(f"{file_to_delete} has been deleted successfully.")
+                # print(f"{file_to_delete} has been deleted successfully.")
             except FileNotFoundError:
                 print(f"{file_to_delete} does not exist.")
             except PermissionError:
@@ -141,7 +196,7 @@ async def main():
 
             try:
                 os.rename(current_file, new_file)
-                print(f"{current_file} has been renamed to {new_file}.")
+                # print(f"{current_file} has been renamed to {new_file}.")
             except FileNotFoundError:
                 print(f"{current_file} does not exist.")
             except PermissionError:
