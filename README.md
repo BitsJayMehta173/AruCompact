@@ -2,21 +2,34 @@ Efficient Video Meeting Application (Pre Frame Processing)
 
 -------------------------------------
 
-Main File :- server.py , main.py (Sender Side Image Decoding Left)
+Main File :- sock.py(asynchronous server-client communication) , main.py , tkin.py
+
+sock.py(asynchronous server-client communication)
+
+main.py (Algorithm Image Capture and Packet Sending(we can create a nparray.save too))
+
+tkin.py (client application)
+
+First run sock.py to estabish the server then run main.py then run tkin.py
+
+Since the asynchronous server-client communication is not optimized we are getting lower frames but it will be faster with other packet sharing protocols but for now i am using this for demo purposes.
 
 (As We need to create microservices for proper structure of camera with other services and threading, Main File will be updated later)
 But I have implemented Camera function in same process for now for continuous flow and error handling
 Now we are ready to send Data over internet but without any audio data.
 
-first run server.py
 
-second run main.py
+Sender Side :- (main.py)[v5.0]
+--------------------------------
+Receiver Side :- (sock.py)[v5.0], (tkin.py)[v5.0]
+--------------------------------
 
-server.py sets up a local host server at port 5000 and listen to the data sent from main.py at real time
 
-main.py scans the uncommon pixels in the image ands sends it to server.py using socket in chunks
+# LATEST UPDATES (V5.0)
 
-Sender Side :- (main.py)[v3.1],(server.py)[v3.1] ,(latest.py)[v2.0] , (basicflow.py)[v1.0]
+I have finally implemented a local machine prototype of my algorithm but due to low async I am getting poor results but using microservices and socket.io and sending over internet will be much faster.
+It is Partnership Model of Video Application
+
 --------------------------------
 # LATEST UPDATES (V3.1)
 
