@@ -22,7 +22,7 @@ else:
 
             # Display the captured frame
             # cv2.imshow('Captured Image', captured_image)
-            cv2.imwrite(str(cnt)+".jpg", frame)
+            cv2.imwrite(str(cnt)+".png", frame)
 
             # Wait for 1 second (1000 milliseconds) before capturing the next frame
             if cv2.waitKey(70) & 0xFF == ord('q'):  # Press 'q' to quit
