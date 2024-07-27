@@ -10,7 +10,9 @@ main.py (Algorithm Image Capture and Packet Sending(we can create a nparray.save
 
 tkin.py (client application)
 
-First run sock.py to estabish the server then run main.py then run tkin.py
+---------------------------------
+
+## First run sock.py to estabish the server ->  run main.py -> run tkin.py
 
 Since the asynchronous server-client communication is not optimized we are getting lower frames but it will be faster with other packet sharing protocols but for now i am using this for demo purposes.
 
