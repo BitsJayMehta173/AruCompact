@@ -16,7 +16,12 @@ import cv2
 import asyncio
 import socket
 import pickle
+import threading
 
+def camera_sleep():
+    print("Camera operation start")
+    time.sleep(0.100)  # Sleep for 5 milliseconds
+    print("Camera operation end")
 
 cap = cv2.VideoCapture(0)  # Use 0 for the default camera
 
@@ -99,13 +104,20 @@ async def main():
         image.save('1.png')
         common_pixels_mask = np.all(image1 == image1cpy, axis=-1)
         common_pixels = image1[common_pixels_mask]
-        coordinates = np.argwhere(common_pixels_mask).astype(np.uint8)
+        coordinates = np.argwhere(common_pixels_mask)
+        dtype = np.dtype([
+                ('pixel_index', np.int32, (2,)),  # Two elements for the pixel index
+                ('rgb', np.uint8, (3,))  # Three elements for the RGB values
+            ])
+        uncommon_pixels_array = np.zeros(coordinates.shape[0], dtype=dtype)
+        uncommon_pixels_array['pixel_index'] = coordinates
+        uncommon_pixels_array['rgb'] = common_pixels
         # print(common_pixels)
-        common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
+        # common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
         # print(common_pixels_with_coordinates)
-        arr.append(common_pixels_with_coordinates)
+        # arr.append(common_pixels_with_coordinates)
         # await send_data(arr,index)
-        await send_array(common_pixels_with_coordinates,writer)
+        await send_array(uncommon_pixels_array,writer)
         # print(common_pixels_with_coordinates)
         # print(image1)
 
@@ -118,6 +130,8 @@ async def main():
         # time.sleep(2)
         while True:
             maxcnt+=1
+            camera_thread = threading.Thread(target=camera_sleep)
+            camera_thread.start()
             ret, frame = cap.read()
 
             if ret:
@@ -156,10 +170,17 @@ async def main():
             # original_coordinates[:, 1] = original_coordinates[:, 1] * scale_factor_x
             # original_coordinates = original_coordinates.astype(int)
 
-            common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
-            arr.append(common_pixels_with_coordinates)
+            dtype = np.dtype([
+                ('pixel_index', np.int32, (2,)),  # Two elements for the pixel index
+                ('rgb', np.uint8, (3,))  # Three elements for the RGB values
+            ])
+            uncommon_pixels_array = np.zeros(coordinates.shape[0], dtype=dtype)
+            uncommon_pixels_array['pixel_index'] = coordinates
+            uncommon_pixels_array['rgb'] = common_pixels
+            # common_pixels_with_coordinates = np.concatenate((coordinates, common_pixels), axis=1)
+            # arr.append(common_pixels_with_coordinates)
             # await send_data(arr,index)
-            await send_array(common_pixels_with_coordinates,writer)
+            await send_array(uncommon_pixels_array,writer)
             # print(common_pixels_with_coordinates.shape)
 
 
@@ -206,9 +227,10 @@ async def main():
 
             end_t = time.time()
             if end_t-start_t>=1:
-                start_t=time.time()
                 print(f"Time taken: {end_t - start_t}")
+                start_t=time.time()
                 print(maxcnt)
+                maxcnt=0
             # print(f"Number of Common Pixels: {len(common_pixels)}")
             # print(f"Total Pixels: {height * width}")
             # print(f"Difference: {(height * width) - len(common_pixels)}")
