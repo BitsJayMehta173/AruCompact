@@ -2,17 +2,19 @@ Efficient Video Meeting Application (Pre Frame Processing)
 
 -------------------------------------
 
-Main File :- sock.py(asynchronous server-client communication) , main.py , tkin.py
+Main File :- sock.py(asynchronous server-client communication) , main.py , tkin.py , microservnp.py (nparrayloader)
 
-sock.py(asynchronous server-client communication)
+sock.py(asynchronous server-client communication and nparray saver)
 
-main.py (Algorithm Image Capture and Packet Sending(we can create a nparray.save too))
+main.py (Algorithm Image Capture and Packet Sending)
+
+microservnp.py (nparray decoder and image converser)
 
 tkin.py (client application)
 
 ---------------------------------
 
-## First run sock.py to estabish the server ->  run main.py -> run tkin.py
+## First run sock.py to estabish the server ->  run main.py -> wait for first packet send msg then run microservnp.py -> run tkin.py
 
 Since the asynchronous server-client communication is not optimized we are getting lower frames but it will be faster with other packet sharing protocols but for now i am using this for demo purposes.
 
@@ -21,11 +23,18 @@ But I have implemented Camera function in same process for now for continuous fl
 Now we are ready to send Data over internet but without any audio data.
 
 
-Sender Side :- (main.py)[v5.0]
+Sender Side :- (main.py)[v6.0]
 --------------------------------
-Receiver Side :- (sock.py)[v5.0], (tkin.py)[v5.0]
+Receiver Side :- (sock.py)[v6.0], (microservnp.py)[v6.0], (tkin.py)[v6.0]
 --------------------------------
 
+# LATEST UPDATES (V6.0)
+
+I have finally completed a video transmission protype for local machine and it is processing 9-10 frames per second without quality decrease and it has been a serious achievement.
+We are sending nparray in local machine for now but it consumes lots of space and sending it over the internet might also affect our space so we need to make a different data encoder for this like image index and rgb encoder in short we can make a small image which reflects the nparray with its values and as we are using uint32 for index we can also utilize it if we make this new nparray compressor which will use exactlu uint 8 type to store the index of pixels and rgb values
+
+
+----------------------------------------------
 
 # LATEST UPDATES (V5.0)
 
