@@ -12,6 +12,8 @@ microservnp.py (nparray decoder and image converser)
 
 tkin.py (client application)
 
+# https://www.youtube.com/watch?v=UY1NvGnDH3o  (YT-DEMO)
+
 ---------------------------------
 
 ## First run sock.py to estabish the server ->  run main.py -> wait for first packet send msg then run microservnp.py -> run tkin.py
